@@ -27,7 +27,9 @@ module Zipline
 
     def normalize(file)
       unless is_io?(file)
-        if file.respond_to?(:url) && (!defined?(::Paperclip::Attachment) || !file.is_a?(::Paperclip::Attachment))
+        if defined?(::CarrierWave::Storage::AWSFile) && file.is_a?(::CarrierWave::Storage::AWSFile)
+          file = StringIO.new(file.read)
+        elsif file.respond_to?(:url) && (!defined?(::Paperclip::Attachment) || !file.is_a?(::Paperclip::Attachment))
           file = file
         elsif file.respond_to? :file
           file = File.open(file.file)
