@@ -27,9 +27,7 @@ module Zipline
 
     def normalize(file)
       unless is_io?(file)
-        if defined?(::CarrierWave::Storage::AWSFile) && file.is_a?(::CarrierWave::Storage::AWSFile)
-          file = StringIO.new(file.read)
-        elsif file.respond_to?(:url) && (!defined?(::Paperclip::Attachment) || !file.is_a?(::Paperclip::Attachment))
+        if file.respond_to?(:url) || file.respond_to?(:authenticated_url) && (!defined?(::Paperclip::Attachment) || !file.is_a?(::Paperclip::Attachment))
           file = file
         elsif file.respond_to? :file
           file = File.open(file.file)
@@ -55,7 +53,7 @@ module Zipline
           zip << buffer
         end
       else
-        the_remote_url = file.url(Time.now + 1.minutes)
+        the_remote_url = get_remote_url(file)
         c = Curl::Easy.new(the_remote_url) do |curl|
           curl.on_body do |data|
             zip << data
@@ -63,6 +61,14 @@ module Zipline
           end
         end
         c.perform
+      end
+    end
+
+    def get_remote_url(file)
+      if file.respond_to?(:authenticated_url)
+        file.authenticated_url
+      else
+        file.url(Time.now + 1.minutes)
       end
     end
 
